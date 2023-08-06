@@ -6,16 +6,18 @@ use bevy::pbr::wireframe::{WireframeConfig, WireframePlugin};
 use bevy::pbr::{AmbientLight, DirectionalLight, NotShadowCaster, PbrBundle, StandardMaterial};
 use bevy::prelude::*;
 use bevy::render::settings::{WgpuFeatures, WgpuSettings};
+use bevy::render::RenderPlugin;
 use bevy::text::{Text, TextAlignment, TextStyle};
 use bevy::ui::{AlignSelf, PositionType, Style, Val};
 use bevy::window::{CursorGrabMode, PrimaryWindow};
 use bevy::DefaultPlugins;
-use bevy::render::RenderPlugin;
-use bevy_normal_material::prelude::{NormalMaterial, NormalMaterialPlugin};
 use bevy_more_shapes::torus::Torus;
-use bevy_more_shapes::{Cone, Cylinder, Grid, Polygon};
-use smooth_bevy_cameras::controllers::fps::{FpsCameraBundle, FpsCameraController, FpsCameraPlugin};
 use bevy_more_shapes::tube::{Curve, Tube};
+use bevy_more_shapes::{Cone, Cylinder, Grid, Polygon};
+use bevy_normal_material::prelude::{NormalMaterial, NormalMaterialPlugin};
+use smooth_bevy_cameras::controllers::fps::{
+    FpsCameraBundle, FpsCameraController, FpsCameraPlugin,
+};
 
 struct WaveFunction;
 
@@ -24,7 +26,7 @@ impl Curve for WaveFunction {
         Vec3::new(
             -f32::sin(t * std::f32::consts::PI * 2.0) * 0.2,
             t,
-            f32::sin(t * std::f32::consts::PI * 2.0) * 0.2
+            f32::sin(t * std::f32::consts::PI * 2.0) * 0.2,
         )
     }
 }
@@ -36,7 +38,6 @@ struct Knot {
 
 impl Curve for Knot {
     fn eval_at(&self, mut t: f32) -> Vec3 {
-
         t *= std::f32::consts::TAU * 2.0;
         let cu = f32::cos(t);
         let su = f32::sin(t);
@@ -258,9 +259,12 @@ fn spawn_shapes(
 
     // Star
     commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::try_from(Polygon {
-            points: generate_star_shape(7, 0.7, 0.4),
-        }).unwrap()),
+        mesh: meshes.add(
+            Mesh::try_from(Polygon {
+                points: generate_star_shape(7, 0.7, 0.4),
+            })
+            .unwrap(),
+        ),
         material: materials.add(StandardMaterial::from(checkerboard_texture.clone())),
         transform: Transform::from_xyz(6.0, 0.0, 11.0),
         ..Default::default()
@@ -349,7 +353,7 @@ fn spawn_shapes(
         mat.cull_mode = None;
         commands.spawn(PbrBundle {
             mesh: meshes.add(Mesh::from(Mesh::from(Torus {
-                radial_circumference: std::f32::consts::PI * 4.0/3.0,
+                radial_circumference: std::f32::consts::PI * 4.0 / 3.0,
                 tube_circumference: std::f32::consts::TAU,
                 ..Default::default()
             }))),
@@ -485,17 +489,13 @@ fn generate_star_shape(n: usize, radius_big: f32, radius_small: f32) -> Vec<Vec2
 
 // Spawn a UI layer with the controls and other useful info.
 fn spawn_info_text(mut commands: Commands, asset_server: Res<AssetServer>) {
-
     // Show text that presents the controls
     commands.spawn(TextBundle {
         style: Style {
             align_self: AlignSelf::FlexEnd,
             position_type: PositionType::Absolute,
-            position: UiRect {
-                top: Val::Px(10.0),
-                left: Val::Px(10.0),
-                ..Default::default()
-            },
+            top: Val::Px(10.0),
+            left: Val::Px(10.0),
             ..Default::default()
         },
         text: Text::from_section(
@@ -604,11 +604,12 @@ fn automatic_lock_system(
 }
 
 // Observed the MouseLock status and updates the actual window config according to the status.
-fn update_lock(mut lock: ResMut<MouseLock>, mut primary_query: Query<&mut Window, With<PrimaryWindow>>) {
-
+fn update_lock(
+    mut lock: ResMut<MouseLock>,
+    mut primary_query: Query<&mut Window, With<PrimaryWindow>>,
+) {
     // Change detected
     if lock.lock != lock.last_lock {
-
         let mut window = primary_query.get_single_mut().unwrap();
 
         // Locking, save position
@@ -639,7 +640,7 @@ impl Plugin for MouseLockPlugin {
             // Add default config
             .insert_resource(MouseLock::default())
             .add_system(automatic_lock_system)
-            .add_system(update_lock.in_base_set(CoreSet::PostUpdate));
+            .add_systems(PostUpdate, update_lock);
     }
 }
 
